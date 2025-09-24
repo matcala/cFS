@@ -3,94 +3,98 @@ project(CFS_ARANYA_EP_APP C)
 
 include(FetchContent)
 
-# 1) Ensure both rustup (in ~/.cargo/bin) and toolchain/bin are visible:
-# set(ENV{PATH} "/home/jstar/.cargo/bin:/home/jstar/.rustup/toolchains/1.85-aarch64-unknown-linux-gnu/bin:$ENV{PATH}")
-
-# # Trying to use corrosion to build rust aranya client capi here and avoid linking issues
-# FetchContent_Declare(
-#     Corrosion
-#     GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-#     GIT_TAG v0.5 # Optionally specify a commit hash, version tag or branch here
-# )
-
-# # Ensure RPATH is defined before target creation so INSTALL_RPATH is inherited
-# set(_CF_RUNTIME_DIR "${CMAKE_INSTALL_PREFIX}/${TGTSYS_${SYSVAR}}/${INSTALL_SUBDIR}")
-# set(CMAKE_INSTALL_RPATH "${_CF_RUNTIME_DIR}")
-
-# Local/public includes
-# include_directories(
-#   mission_inc
-#   platform_inc
-#   fsw/src
-#   include         # aranya-client.h placed here
-#   ${hwlib_MISSION_DIR}/fsw/public_inc
-# )
+# Trying to use corrosion to build rust aranya client capi here and avoid manual linking issues
+FetchContent_Declare(
+    Corrosion
+    GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+    GIT_TAG v0.5 # Optionally specify a commit hash, version tag or branch here
+)
 
 set(APP_SRC_FILES
   fsw/src/aranya_ep_app.c
 )
-
-# aux_source_directory(src APP_SRC_FILES)
-
 
 # Build the cFS app
 add_cfe_app(aranya_ep ${APP_SRC_FILES})
 
 target_include_directories(aranya_ep PUBLIC fsw/inc)
 
+# Determine the output directory used by aranya_ep and feed it to Corrosion.
+# Note: Do not use generator expressions here; Corrosion evaluates these at configure time.
+set(_ARANYA_EP_OUT_DIR "")
+# Single-config path
+get_target_property(_ARANYA_EP_RUNTIME_DIR aranya_ep RUNTIME_OUTPUT_DIRECTORY)
+if(_ARANYA_EP_RUNTIME_DIR)
+  set(_ARANYA_EP_OUT_DIR "${_ARANYA_EP_RUNTIME_DIR}")
+endif()
+# Multi-config path(s)
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${cfg}" _CFG_U)
+    get_target_property(_ARANYA_EP_RUNTIME_DIR_${_CFG_U} aranya_ep RUNTIME_OUTPUT_DIRECTORY_${_CFG_U})
+    if(_ARANYA_EP_RUNTIME_DIR_${_CFG_U})
+      set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${_CFG_U} "${_ARANYA_EP_RUNTIME_DIR_${_CFG_U}}")
+      set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${_CFG_U} "${_ARANYA_EP_RUNTIME_DIR_${_CFG_U}}")
+    endif()
+  endforeach()
+endif()
+# Fallback for single-config if the target didn't set a runtime dir
+if(NOT _ARANYA_EP_OUT_DIR AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(_ARANYA_EP_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+# Apply globals for Corrosion if we have a concrete dir
+if(_ARANYA_EP_OUT_DIR)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${_ARANYA_EP_OUT_DIR}")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${_ARANYA_EP_OUT_DIR}")
+endif()
 
-# Also force both build-tree and install-tree RPATH explicitly
-# set_target_properties(aranya_ep PROPERTIES
-#   BUILD_RPATH "${_CF_RUNTIME_DIR}"
-#   INSTALL_RPATH "${_CF_RUNTIME_DIR}"
-# )
-
-# --- Link against the Aranya C API at build time ---
-# If you have headers only, this is optional (symbols resolve at runtime).
-# But it's fine to link now if the lib is present.
-# set(ARANYA_SO ${CMAKE_CURRENT_SOURCE_DIR}/lib/libaranya_client.so)
-
-# message(STATUS "Enabling Corrosion to build/link aranya-client-capi...")
-# # Trying to match this with aranya capi rust toolchain version
-# set(Rust_COMPILER "/home/jstar/.rustup/toolchains/1.85-aarch64-unknown-linux-gnu/bin/rustc" CACHE FILEPATH "")
-# set(Rust_CARGO    "/home/jstar/.rustup/toolchains/1.85-aarch64-unknown-linux-gnu/bin/cargo" CACHE FILEPATH "")
-
-# message(STATUS "ENV PATH = [$ENV{PATH}]")
-# execute_process(COMMAND /usr/bin/env which rustup RESULT_VARIABLE rv1 OUTPUT_VARIABLE out1 ERROR_VARIABLE err1)
-# message(STATUS "which rustup -> rv=${rv1} out=${out1} err=${err1}")
-# execute_process(COMMAND /usr/bin/env which rustc  RESULT_VARIABLE rv2 OUTPUT_VARIABLE out2 ERROR_VARIABLE err2)
-# message(STATUS "which rustc  -> rv=${rv2} out=${out2} err=${err2}")
-# message(STATUS "ENV PATH = [$ENV{PATH}]")
-# execute_process(COMMAND /bin/sh -lc "command -v rustup || true" OUTPUT_VARIABLE R1)
-# execute_process(COMMAND /bin/sh -lc "command -v rustc  || true" OUTPUT_VARIABLE R2)
-# message(STATUS "command -v rustup: ${R1}")
-# message(STATUS "command -v rustc:  ${R2}")
+# Ensure Release profile so Corrosion copies from 'release' instead of 'debug' (single-config generators).
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
 
 # Set any global configuration variables such as `Rust_TOOLCHAIN` before this line!
-# FetchContent_MakeAvailable(Corrosion)
+FetchContent_MakeAvailable(Corrosion)
 
 # Import targets defined in a package or workspace manifest `Cargo.toml` file
-# message(STATUS "Importing aranya-client-capi crate via corrosion...")
-# corrosion_import_crate(MANIFEST_PATH aranya-client-capi/Cargo.toml)
+message(STATUS "Importing aranya-client-capi crate via corrosion...")
+corrosion_import_crate(
+  MANIFEST_PATH 
+  aranya-client-capi/Cargo.toml
+  # FLAGS --release   # not needed when CMAKE_BUILD_TYPE=Release
+)
 
-# message(STATUS "Linking aranya_ep against aranya-client-capi crate...")
-# target_link_libraries(aranya_ep aranya-client-capi)
+# Ensure the runtime linker looks in the module directory and (as a fallback) the app build dir.
+# This keeps aranya_ep.so able to find libaranya_client_capi.so in both places.
+set_target_properties(aranya_ep PROPERTIES
+  BUILD_RPATH "\$ORIGIN;\$ORIGIN/../../../native/default_cpu1/apps/aranya_ep"
+  INSTALL_RPATH "\$ORIGIN;\$ORIGIN/../../../native/default_cpu1/apps/aranya_ep"
+)
 
-# if(EXISTS "${ARANYA_SO}")
-# 	target_link_libraries(aranya_ep ${ARANYA_SO})
+# After building, also stage the Rust .so next to aranya_ep.so in build/exe/cpu1/cf.
+# Adjust the staged dir if your mission layout differs.
+set(_CFE_STAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../../../../exe/cpu1/cf")
+add_custom_command(TARGET aranya_ep POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${_CFE_STAGE_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          $<TARGET_FILE:aranya_client_capi-shared>
+          "${_CFE_STAGE_DIR}"
+  COMMENT "Staging libaranya_client_capi.so to ${_CFE_STAGE_DIR}"
+)
 
-# 	# --- Copy the Aranya .so into the same dir as aranya_ep.so after build ---
-# 	# cFE stages modules into build/exe/<cpu>/cf; $<TARGET_FILE_DIR:aranya_ep> resolves there.
-# 	add_custom_command(TARGET aranya_ep POST_BUILD
-# 	  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-# 	          "${ARANYA_SO}"
-# 	          "$<TARGET_FILE_DIR:aranya_ep>/libaranya_client.so"
-# 	  COMMAND ${CMAKE_COMMAND} -E make_directory "${_CF_RUNTIME_DIR}"
-# 	  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-# 	          "${ARANYA_SO}"
-# 	          "${_CF_RUNTIME_DIR}/libaranya_client.so"
-# 	  COMMENT "Staging libaranya_client.so (build dir and runtime ${_CF_RUNTIME_DIR})"
-# 	)
-# else()
-# 	message(WARNING "Aranya client library not found at ${ARANYA_SO}; building aranya_ep without direct linkage.")
-# endif()
+# Clean up so subsequent targets are unaffected
+unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+unset(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${cfg}" _CFG_U)
+    unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${_CFG_U})
+    unset(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${_CFG_U})
+  endforeach()
+endif()
+
+message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}") # resolves to cfs/build/native/default_cpu1/apps/aranya_ep
+
+message(STATUS "Linking aranya_ep against aranya-client-capi crate...")
+target_link_libraries(aranya_ep aranya_client_capi)
+
