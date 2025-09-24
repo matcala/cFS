@@ -37,9 +37,10 @@ corrosion_import_crate(
 
 # Ensure the runtime linker looks in the module directory and (as a fallback) the app build dir.
 # This keeps aranya_ep.so able to find libaranya_client_capi.so in both places.
+# CMAKE_CURRENT_BINARY_DIR is build/fsw/apps/aranya_ep
 set_target_properties(aranya_ep PROPERTIES
-  BUILD_RPATH "\$ORIGIN;\$ORIGIN/../../../native/default_cpu1/apps/aranya_ep"
-  INSTALL_RPATH "\$ORIGIN;\$ORIGIN/../../../native/default_cpu1/apps/aranya_ep"
+  BUILD_RPATH "${CMAKE_CURRENT_BINARY_DIR}"
+  INSTALL_RPATH "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 # After building, also stage the Rust .so next to aranya_ep.so in build/exe/cpu1/cf.
