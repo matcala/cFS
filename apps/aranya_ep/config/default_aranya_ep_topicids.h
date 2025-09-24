@@ -10,6 +10,14 @@
 #define _ARANYA_EP_TOPICIDS_H_
 
 /*
+We get
+EVS Port1 1980-012-14:03:20.56161 66/1/CFE_SB 7: Duplicate Subscription,MsgId 0x18a0 on ARANYA_EP_CMD_PIPE pipe,app ARANYA_EP_APP
+from cFS so maybe the 0x18A0 is already taken?
+or number 1 before 8A0 is not read.
+TODO: fix double subscription
+*/
+
+/*
 ** CCSDS V1 Command Message IDs (MID) must be 0x18xx
 */
 #define CFE_MISSION_ARANYA_EP_CMD_TOPICID          0x18A0
