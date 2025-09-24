@@ -54,5 +54,6 @@ add_custom_command(TARGET aranya_ep POST_BUILD
 )
 
 message(STATUS "Linking aranya_ep against aranya-client-capi crate...")
+# IMPORTANT: replace - with _ in library name for lib because rust changes the filename during build
 target_link_libraries(aranya_ep aranya_client_capi)
 
