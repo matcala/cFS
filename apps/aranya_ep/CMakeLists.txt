@@ -19,35 +19,6 @@ add_cfe_app(aranya_ep ${APP_SRC_FILES})
 
 target_include_directories(aranya_ep PUBLIC fsw/inc)
 
-# Determine the output directory used by aranya_ep and feed it to Corrosion.
-# Note: Do not use generator expressions here; Corrosion evaluates these at configure time.
-set(_ARANYA_EP_OUT_DIR "")
-# Single-config path
-get_target_property(_ARANYA_EP_RUNTIME_DIR aranya_ep RUNTIME_OUTPUT_DIRECTORY)
-if(_ARANYA_EP_RUNTIME_DIR)
-  set(_ARANYA_EP_OUT_DIR "${_ARANYA_EP_RUNTIME_DIR}")
-endif()
-# Multi-config path(s)
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${cfg}" _CFG_U)
-    get_target_property(_ARANYA_EP_RUNTIME_DIR_${_CFG_U} aranya_ep RUNTIME_OUTPUT_DIRECTORY_${_CFG_U})
-    if(_ARANYA_EP_RUNTIME_DIR_${_CFG_U})
-      set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${_CFG_U} "${_ARANYA_EP_RUNTIME_DIR_${_CFG_U}}")
-      set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${_CFG_U} "${_ARANYA_EP_RUNTIME_DIR_${_CFG_U}}")
-    endif()
-  endforeach()
-endif()
-# Fallback for single-config if the target didn't set a runtime dir
-if(NOT _ARANYA_EP_OUT_DIR AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(_ARANYA_EP_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-endif()
-# Apply globals for Corrosion if we have a concrete dir
-if(_ARANYA_EP_OUT_DIR)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${_ARANYA_EP_OUT_DIR}")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${_ARANYA_EP_OUT_DIR}")
-endif()
-
 # Ensure Release profile so Corrosion copies from 'release' instead of 'debug' (single-config generators).
 if(NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -81,19 +52,6 @@ add_custom_command(TARGET aranya_ep POST_BUILD
           "${_CFE_STAGE_DIR}"
   COMMENT "Staging libaranya_client_capi.so to ${_CFE_STAGE_DIR}"
 )
-
-# Clean up so subsequent targets are unaffected
-unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-unset(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${cfg}" _CFG_U)
-    unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${_CFG_U})
-    unset(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${_CFG_U})
-  endforeach()
-endif()
-
-message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}") # resolves to cfs/build/native/default_cpu1/apps/aranya_ep
 
 message(STATUS "Linking aranya_ep against aranya-client-capi crate...")
 target_link_libraries(aranya_ep aranya_client_capi)
