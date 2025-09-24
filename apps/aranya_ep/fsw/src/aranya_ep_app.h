@@ -21,7 +21,7 @@
 #include "aranya_ep_perfids.h"
 
 /* Aranya C API */
-// #include "aranya-client.h"
+#include "aranya-client.h"
 
 // #include <stdbool.h>
 // #include <string.h>

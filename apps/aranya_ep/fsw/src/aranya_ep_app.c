@@ -6,7 +6,7 @@
 // #include "osapi.h"
 #include "aranya_ep_app.h"          // un-commented to get prototypes/defines
 #include "aranya_ep_eventids.h"   // event IDs
-// #include "aranya-client.h"          // ensure Aranya C API symbols visible
+#include "aranya-client.h"          // ensure Aranya C API symbols visible
 #include <string.h>
 #include <stdbool.h>
 
@@ -19,15 +19,15 @@
 ARANYA_EP_AppData_t ARANYA_EP_App;
 
 /* Aranya presence smoke-test */
-// static void ARANYA_EP_AranyaLibTest(void)
-// {
-//     struct AranyaExtError ext;
-//     memset(&ext, 0, sizeof(ext));
-//     size_t need = 0;
-//     (void)aranya_ext_error_msg(&ext, NULL, &need);
-//     CFE_EVS_SendEvent(ARANYA_EP_INIT_INF_EID, CFE_EVS_EventType_INFORMATION,
-//                       "Aranya API presence OK (ext msg need=%lu)", (unsigned long)need);
-// }
+static void ARANYA_EP_AranyaLibTest(void)
+{
+    struct AranyaExtError ext;
+    memset(&ext, 0, sizeof(ext));
+    size_t need = 0;
+    (void)aranya_ext_error_msg(&ext, NULL, &need);
+    CFE_EVS_SendEvent(ARANYA_EP_INIT_INF_EID, CFE_EVS_EventType_INFORMATION,
+                      "Aranya API presence OK (ext msg need=%lu)", (unsigned long)need);
+}
 
 /* Initialization patterned after SAMPLE_APP_Init */
 CFE_Status_t ARANYA_EP_Init(void)
@@ -76,7 +76,7 @@ CFE_Status_t ARANYA_EP_Init(void)
     }
 
     // /* Aranya library smoke test */
-    // ARANYA_EP_AranyaLibTest();
+    ARANYA_EP_AranyaLibTest();
 
     // /* Attempt Aranya client init (non-fatal) */
     // if (!ARANYA_EP_InitAranya())
