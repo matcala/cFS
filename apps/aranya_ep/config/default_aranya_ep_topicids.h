@@ -21,12 +21,13 @@ TODO: fix double subscription
 ** CCSDS V1 Command Message IDs (MID) must be 0x18xx
 */
 #define CFE_MISSION_ARANYA_EP_CMD_TOPICID          0x18A0
+#define CFE_MISSION_ARANYA_EP_SEND_HK_TOPICID      0x18A1
 
 
 /*
 ** CCSDS V1 Telemetry Message IDs must be 0x08xx
 */
-#define CFE_MISSION_ARANYA_EP_SEND_HK_TOPICID      0x08A0
-#define CFE_MISSION_ARANYA_EP_HK_TLM_TOPICID       0x08A0
+#define CFE_MISSION_ARANYA_EP_HK_TLM_TOPICID                      0x08A0
+#define CFE_MISSION_ARANYA_EP_ONBOARD_ANNOUNCE_TLM_TOPICID        0x08A1
 
 #endif /* _ARANYA_EP_MSGIDS_H_ */
