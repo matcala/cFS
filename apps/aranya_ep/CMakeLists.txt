@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(CFS_ARANYA_EP_APP C)
+project(CFE_ARANYA_EP_APP C)
 
 include(FetchContent)
 

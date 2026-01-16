@@ -13,7 +13,6 @@ set(ARANYA_EP_APP_PLATFORM_CONFIG_FILE_LIST
   aranya_ep_internal_cfg.h
   aranya_ep_perfids.h
   aranya_ep_msgids.h
-  aranya_ep_topicids.h
 )
 
 # Create wrappers around the all the config header files
