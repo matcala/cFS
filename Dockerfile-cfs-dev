@@ -34,11 +34,10 @@ RUN \
 # Install aranya-daemon bin
 RUN \
    cargo install --git https://github.com/matcala/aranya.git \
-    --branch cosmos-gate aranya-daemon \
+    --branch main aranya-daemon \
     --version 3.0.0 \
     --target aarch64-unknown-linux-gnu  \
     --features aqc,experimental,afc,preview \
-    # Maybe remove as the COPY below should overwrite it
     && mkdir -m 0755 -p /run/aranya/run /run/aranya/config /run/aranya/logs /run/aranya/cache /run/aranya/state /etc/aranya
 
 
