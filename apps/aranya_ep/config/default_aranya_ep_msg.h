@@ -12,16 +12,8 @@
 #ifndef _ARANYA_EP_MSG_H_
 #define _ARANYA_EP_MSG_H_
 
-// #include "cfe.h" // cfe-wide header that contains all headers
 #include "cfe_msg.h"
-
-/*
-** Ground Command Codes
-*/
-#define ARANYA_EP_NOOP_CC  0
-#define ARANYA_EP_RESET_CC 1
-#define ARANYA_EP_EXP1_CC  2
-#define ARANYA_EP_EXP2_CC  3
+#include "aranya_ep_fcncodes.h"
 
 /*
 ** Generic "no arguments" command type definition

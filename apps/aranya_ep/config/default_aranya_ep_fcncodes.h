@@ -1,9 +1,12 @@
-#ifndef _ARANYA_EP_FCNCODES_H_
-#define _ARANYA_EP_FCNCODES_H_
+#ifndef ARANYA_EP_FCNCODES_H
+#define ARANYA_EP_FCNCODES_H
 
-#define ARANYA_EP_NOOP_CC           0
-#define ARANYA_EP_RESET_COUNTERS_CC 1
+/*
+** Ground Command Codes
+*/
+#define ARANYA_EP_NOOP_CC  0
+#define ARANYA_EP_RESET_CC 1
 #define ARANYA_EP_EXP1_CC  2
 #define ARANYA_EP_EXP2_CC  3
 
-#endif
+#endif /* ARANYA_EP_FCNCODES_H */
