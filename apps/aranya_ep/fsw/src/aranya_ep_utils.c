@@ -179,7 +179,8 @@ bool ARANYA_EP_InitAranya(void)
         memset(&kb_err, 0, sizeof(kb_err));
 
         AranyaError krc = aranya_get_key_bundle_ext(&ARANYA_EP_App.Client, kb, &kb_len, &kb_err);
-        if (krc == ARANYA_ERROR_BUFFER_TOO_SMALL)
+        /* Check if buffer was too small - either by error code or if kb_len was updated to be larger than our initial 1 byte */
+        if (krc == ARANYA_ERROR_BUFFER_TOO_SMALL || (krc != ARANYA_ERROR_SUCCESS && kb_len > 1))
         {
             /* Sanity cap to avoid unexpected huge allocations */
             if (kb_len == 0 || kb_len > (64 * 1024))
@@ -207,10 +208,10 @@ bool ARANYA_EP_InitAranya(void)
                         /* Cache keybundle length upon successful retrieval */
                         ARANYA_EP_App.KeyBundleLen = (uint32)kb_len;
 
-                        /* Save keybundle to /data/aranya/keybundle.bin via OSAL */
-                        (void)OS_mkdir("/data/aranya", OS_DEFAULT_FILE_PERMISSIONS); /* ok if it already exists */
+                        /* Save keybundle to /ram/aranya/keybundle.bin via OSAL */
+                        (void)OS_mkdir("/ram/aranya", OS_DEFAULT_FILE_PERMISSIONS); /* ok if it already exists */
 
-                        const char *kb_path = "/data/aranya/keybundle.bin";
+                        const char *kb_path = "/ram/aranya/keybundle.bin";
                         osal_id_t   fd      = OS_OBJECT_ID_UNDEFINED;
                         int32       rc_open =
                             OS_OpenCreate(&fd, kb_path, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE);
@@ -267,8 +268,8 @@ bool ARANYA_EP_InitAranya(void)
             ARANYA_EP_App.KeyBundleLen = (uint32)kb_len;
 
             /* Edge case: small initial buffer was enough; save directly */
-            (void)OS_mkdir("/data/aranya", OS_DEFAULT_FILE_PERMISSIONS);
-            const char *kb_path = "/data/aranya/keybundle.bin";
+            (void)OS_mkdir("/ram/aranya", OS_DEFAULT_FILE_PERMISSIONS);
+            const char *kb_path = "/ram/aranya/keybundle.bin";
             osal_id_t   fd      = OS_OBJECT_ID_UNDEFINED;
             int32 rc_open = OS_OpenCreate(&fd, kb_path, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE);
             if (rc_open == OS_SUCCESS)
