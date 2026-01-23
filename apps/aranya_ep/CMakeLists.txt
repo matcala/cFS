@@ -12,6 +12,7 @@ FetchContent_Declare(
 
 set(APP_SRC_FILES
   fsw/src/aranya_ep_app.c
+  fsw/src/aranya_ep_utils.c
 )
 
 # Build the cFS app
@@ -22,12 +23,20 @@ target_include_directories(aranya_ep PUBLIC fsw/inc)
 # Set any global configuration variables such as `Rust_TOOLCHAIN` before this line!
 FetchContent_MakeAvailable(Corrosion)
 
+# Enable Aranya features in client header
+add_compile_definitions(
+  ENABLE_ARANYA_AFC
+  ENABLE_ARANYA_PREVIEW
+  ENABLE_ARANYA_EXPERIMENTAL
+)
+
 # Import targets defined in a package or workspace manifest `Cargo.toml` file
 message(STATUS "Importing aranya-client-capi crate via corrosion...")
 corrosion_import_crate(
-  MANIFEST_PATH 
+  MANIFEST_PATH
   aranya-client-capi/Cargo.toml
   PROFILE release   # linking will fail with debug executable for some reason
+  FEATURES preview afc experimental
 )
 
 # resolves to build/exe/cpu1/cf

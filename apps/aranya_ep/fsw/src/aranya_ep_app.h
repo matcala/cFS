@@ -19,6 +19,7 @@
 #include "aranya_ep_msg.h"
 #include "aranya_ep_version.h"
 #include "aranya_ep_perfids.h"
+#include "aranya_ep_utils.h"
 
 /* Aranya C API */
 #include "aranya-client.h"
@@ -39,7 +40,14 @@
 /*
 ** Default UDS path
 */
-#define ARANYA_EP_DEFAULT_UDS_PATH "/ram/aranya/aranya_ep.sock"
+#define ARANYA_EP_DEFAULT_UDS_PATH "/run/aranya/run/uds.sock"
+
+/*
+** Default file permissions for keybundle storage
+*/
+#ifndef OS_DEFAULT_FILE_PERMISSIONS
+#define OS_DEFAULT_FILE_PERMISSIONS 0777
+#endif
 
 /*
 ** Authorization result codes
@@ -82,9 +90,10 @@ typedef struct
     /*
     ** Aranya client state
     */
-    // TODO: check and maybe remove.
-    // struct AranyaClient ArClient;     /* Aranya client instance */
-    // bool                ArClientInit; /* Flag indicating if Aranya client is initialized */
+    AranyaClient Client;                         /* Aranya client instance */
+    bool         ClientInitialized;              /* Flag indicating if client is initialized */
+    char         DeviceIdStr[ARANYA_ID_STR_LEN]; /* Cached device ID string for telemetry */
+    uint32       KeyBundleLen;                   /* Cached keybundle length (bytes) */
 
     /*
     ** Application run status
@@ -107,15 +116,7 @@ extern ARANYA_EP_AppData_t ARANYA_EP_App; /* ARANYA_EP App Data */
 **       functions are not called from any other source module.
 */
 void  ARANYA_EP_AppMain(void);
-// int32 ARANYA_EP_Init(void);
-CFE_Status_t ARANYA_EP_Init(void);
 void  ARANYA_EP_ProcessCommand(CFE_SB_Buffer_t *SBBufPtr);
 void  ARANYA_EP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr, CFE_MSG_FcnCode_t FcnCode);
-// void  ARANYA_EP_SendHousekeeping(void);
-// bool  ARANYA_EP_InitAranya(void);
-// bool  ARANYA_EP_AuthorizeForward(void);
-// void  ARANYA_EP_ForwardToDest(const ARANYA_EP_ForwardCmd_t *Cmd);
-int32 ARANYA_EP_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t Expected);
-// bool  ARANYA_EP_ValidateUdsPath(const char *Path);
 
 #endif /* _ARANYA_EP_APP_H_ */
