@@ -11,6 +11,11 @@
 #include <string.h>
 #include <stdbool.h>
 
+/* SAMPLE_APP interface for command forwarding */
+#include "sample_app_msgids.h"
+#include "sample_app_fcncodes.h"
+#include "sample_app_msg.h"
+
 /* Global app data - defined here, declared extern in header */
 ARANYA_EP_AppData_t ARANYA_EP_App;
 
@@ -109,9 +114,32 @@ void ARANYA_EP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr, CFE_MSG_FcnCode_t
         {
             ARANYA_EP_App.CmdCounter++;
             CFE_EVS_SendEvent(ARANYA_EP_EXP1_INF_EID, CFE_EVS_EventType_INFORMATION,
-                              "EXP1 command received (policy enforcement placeholder - CAM forwarding not implemented)");
-            /* TODO: Add Aranya policy enforcement logic here */
-            /* CAM forwarding not implemented in non-NOS3 version */
+                              "EXP1 command received");
+
+            OS_printf("[ARANYA_EP] Enforcing policy on CMD EXP1...\n");
+            OS_printf("[ARANYA_EP] Command Accepted, instructing SAMPLE_APP (NOOP)...\n");
+
+            /* Forward NOOP command to SAMPLE_APP */
+            SAMPLE_APP_NoopCmd_t sample_cmd;
+            CFE_Status_t         sample_status;
+
+            CFE_MSG_Init(CFE_MSG_PTR(sample_cmd.CommandHeader),
+                         CFE_SB_ValueToMsgId(SAMPLE_APP_CMD_MID),
+                         sizeof(SAMPLE_APP_NoopCmd_t));
+            CFE_MSG_SetFcnCode(CFE_MSG_PTR(sample_cmd.CommandHeader), SAMPLE_APP_NOOP_CC);
+            sample_status = CFE_SB_TransmitMsg(CFE_MSG_PTR(sample_cmd.CommandHeader), true);
+
+            if (sample_status != CFE_SUCCESS)
+            {
+                ARANYA_EP_App.ErrCounter++;
+                CFE_EVS_SendEvent(ARANYA_EP_CMD_ERR_EID, CFE_EVS_EventType_ERROR,
+                                  "Failed to send SAMPLE_APP NOOP command: 0x%08lX",
+                                  (unsigned long)sample_status);
+            }
+            else
+            {
+                OS_printf("[ARANYA_EP] SAMPLE_APP NOOP command transmitted.\n");
+            }
         }
         break;
 
@@ -120,8 +148,32 @@ void ARANYA_EP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr, CFE_MSG_FcnCode_t
         {
             ARANYA_EP_App.CmdCounter++;
             CFE_EVS_SendEvent(ARANYA_EP_EXP2_INF_EID, CFE_EVS_EventType_INFORMATION,
-                              "EXP2 command received (policy enforcement placeholder)");
-            /* TODO: Add Aranya policy enforcement logic here */
+                              "EXP2 command received");
+
+            OS_printf("[ARANYA_EP] Enforcing policy on CMD EXP2...\n");
+            OS_printf("[ARANYA_EP] Command Accepted, instructing SAMPLE_APP (RESET_COUNTERS)...\n");
+
+            /* Forward RESET_COUNTERS command to SAMPLE_APP */
+            SAMPLE_APP_ResetCountersCmd_t sample_cmd;
+            CFE_Status_t                  sample_status;
+
+            CFE_MSG_Init(CFE_MSG_PTR(sample_cmd.CommandHeader),
+                         CFE_SB_ValueToMsgId(SAMPLE_APP_CMD_MID),
+                         sizeof(SAMPLE_APP_ResetCountersCmd_t));
+            CFE_MSG_SetFcnCode(CFE_MSG_PTR(sample_cmd.CommandHeader), SAMPLE_APP_RESET_COUNTERS_CC);
+            sample_status = CFE_SB_TransmitMsg(CFE_MSG_PTR(sample_cmd.CommandHeader), true);
+
+            if (sample_status != CFE_SUCCESS)
+            {
+                ARANYA_EP_App.ErrCounter++;
+                CFE_EVS_SendEvent(ARANYA_EP_CMD_ERR_EID, CFE_EVS_EventType_ERROR,
+                                  "Failed to send SAMPLE_APP RESET_COUNTERS command: 0x%08lX",
+                                  (unsigned long)sample_status);
+            }
+            else
+            {
+                OS_printf("[ARANYA_EP] SAMPLE_APP RESET_COUNTERS command transmitted.\n");
+            }
         }
         break;
 
