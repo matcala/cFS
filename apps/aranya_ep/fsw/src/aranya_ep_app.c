@@ -117,6 +117,12 @@ void ARANYA_EP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr, CFE_MSG_FcnCode_t
                               "EXP1 command received");
 
             OS_printf("[ARANYA_EP] Enforcing policy on CMD EXP1...\n");
+           
+            /* 
+            PLACEHOLDER FOR aranya_receive_cosmos_ctrl() 
+                need TeamId to call function properly
+            */
+
             OS_printf("[ARANYA_EP] Command Accepted, instructing SAMPLE_APP (NOOP)...\n");
 
             /* Forward NOOP command to SAMPLE_APP */
@@ -151,6 +157,12 @@ void ARANYA_EP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr, CFE_MSG_FcnCode_t
                               "EXP2 command received");
 
             OS_printf("[ARANYA_EP] Enforcing policy on CMD EXP2...\n");
+
+            /* 
+            PLACEHOLDER FOR aranya_receive_cosmos_ctrl() 
+                need TeamId to call function properly
+            */
+
             OS_printf("[ARANYA_EP] Command Accepted, instructing SAMPLE_APP (RESET_COUNTERS)...\n");
 
             /* Forward RESET_COUNTERS command to SAMPLE_APP */
